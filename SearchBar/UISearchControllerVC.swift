@@ -20,6 +20,7 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
     var longitude = ""
     var filteredData: [String]!
     var searchController: UISearchController!
+    var placesData = [String]()
     
     let data = ["New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX",
         "Philadelphia, PA", "Phoenix, AZ", "San Diego, CA", "San Antonio, TX",
@@ -48,34 +49,28 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         
         // Sets this view controller as presenting view controller for the search interface
         definesPresentationContext = true
-        
-        determineUserLocation()
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("TableCell") as! UITableViewCell
-        cell.textLabel?.text = filteredData[indexPath.row]
+        cell.textLabel?.text = placesData[indexPath.row]
         return cell
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredData.count
+        return placesData.count
     }
     
     func updateSearchResultsForSearchController(searchController: UISearchController) {
-        let searchText = searchController.searchBar.text
         
-        filteredData = searchText.isEmpty ? data : data.filter({(dataString: String) -> Bool in
-            return dataString.rangeOfString(searchText, options: .CaseInsensitiveSearch) != nil
-        })
-        
-        
-        
+        retreiveBusinesses(searchController.searchBar.text)
         tableView.reloadData()
     }
 // MARK: Retreive Businesses Data from API
     
     func retreiveBusinesses(keyword: String) {
+        
+        determineUserLocation()
         
         // Make sure Latitude + Longitude are set...
         let url = NSURL (string: "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=\(keyword)&types=establishment&location=\(latitude),\(longitude)&radius=500&sensor=true&language=en&key=\(APIKey)")
@@ -83,11 +78,15 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         
         let task = NSURLSession.sharedSession().dataTaskWithURL(url!) {(data, response, error) in
             
-            var jsonResult: NSDictionary = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments, error: nil) as! NSDictionary
-            var resluts: AnyObject? = jsonResult["predictions"]
-            
-            println(resluts)
-            
+            if let jsonResult: NSDictionary = NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments, error: nil) as? NSDictionary {
+                if let predictions = jsonResult["predictions"] as? NSArray {
+                    for item in predictions {
+                        if let description = item["description"] as? String {
+                            self.placesData.append(description)
+                        }
+                    }
+                }
+            }
         }
         
         task.resume()
@@ -115,9 +114,6 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         
         // Stopping
         locationManager.stopUpdatingLocation()
-        
-        // Retreive businesses TEST
-        retreiveBusinesses("Bern")
     }
     
     // authorization status
