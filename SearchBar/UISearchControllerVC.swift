@@ -11,7 +11,7 @@ import CoreLocation
 
 class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchResultsUpdating, CLLocationManagerDelegate {
 
-    let APIKey = ""
+    let APIKey = "AIzaSyDAimwxwKYyEVsVj-RC6qetSPqLK_lOnXg"
     let APISecret = ""
     
     @IBOutlet weak var tableView: UITableView!
@@ -49,7 +49,7 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         // Sets this view controller as presenting view controller for the search interface
         definesPresentationContext = true
         
-        self.determineUserLocation()
+        determineUserLocation()
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -77,8 +77,20 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
     
     func retreiveBusinesses(keyword: String) {
         
+        // Make sure Latitude + Longitude are set...
+        let url = NSURL (string: "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=\(keyword)&types=establishment&location=\(latitude),\(longitude)&radius=500&sensor=true&language=en&key=\(APIKey)")
+    
         
+        let task = NSURLSession.sharedSession().dataTaskWithURL(url!) {(data, response, error) in
+            
+            var jsonResult: NSDictionary = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments, error: nil) as! NSDictionary
+            var resluts: AnyObject? = jsonResult["predictions"]
+            
+            println(resluts)
+            
+        }
         
+        task.resume()
     }
     
 // MARK: CoreLocation services
@@ -103,6 +115,9 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         
         // Stopping
         locationManager.stopUpdatingLocation()
+        
+        // Retreive businesses TEST
+        retreiveBusinesses("Bern")
     }
     
     // authorization status
