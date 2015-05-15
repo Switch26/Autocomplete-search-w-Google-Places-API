@@ -66,19 +66,23 @@ class UISearchControllerVC: UIViewController, UITableViewDataSource, UISearchRes
         retreiveBusinesses(searchController.searchBar.text)
         tableView.reloadData()
     }
+    
 // MARK: Retreive Businesses Data from API
     
-    func retreiveBusinesses(keyword: String) {
+    func retreiveBusinesses(var keyword: String) {
         
         determineUserLocation()
+        var keywordProtection = keyword.stringByReplacingOccurrencesOfString(" ", withString: "")
         
         // Make sure Latitude + Longitude are set...
-        let url = NSURL (string: "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=\(keyword)&types=establishment&location=\(latitude),\(longitude)&radius=500&sensor=true&language=en&key=\(APIKey)")
+        let url = NSURL (string: "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=\(keywordProtection)&types=establishment&location=\(latitude),\(longitude)&radius=500&sensor=true&language=en&key=\(APIKey)")
     
         
         let task = NSURLSession.sharedSession().dataTaskWithURL(url!) {(data, response, error) in
             
             if let jsonResult: NSDictionary = NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments, error: nil) as? NSDictionary {
+                
+                self.placesData = []
                 if let predictions = jsonResult["predictions"] as? NSArray {
                     for item in predictions {
                         if let description = item["description"] as? String {
